@@ -1,0 +1,25 @@
+plugins {
+    id 'war'
+    id 'org.gretty' version '3.0.1'
+}
+
+repositories {
+    jcenter()
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-parameters'
+    println 'Compiler args: ' + options.compilerArgs
+}
+
+dependencies {
+
+    compile group: 'org.reflections', name: 'reflections', version: '0.9.11'
+    implementation 'io.swagger:swagger-servlet:1.6.0'
+
+    // Use JUnit test framework
+    testImplementation 'junit:junit:4.12'
+}
