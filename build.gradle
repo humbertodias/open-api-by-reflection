@@ -18,7 +18,12 @@ tasks.withType(JavaCompile) {
 dependencies {
 
     compile group: 'org.reflections', name: 'reflections', version: '0.9.11'
+
+    // Annotation
     implementation 'io.swagger:swagger-servlet:1.6.0'
+
+    // Programatically
+    implementation 'org.springdoc:springdoc-openapi-core:1.1.49'
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'

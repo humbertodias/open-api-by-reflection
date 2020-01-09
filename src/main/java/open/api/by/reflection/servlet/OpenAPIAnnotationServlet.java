@@ -11,14 +11,14 @@ import javax.servlet.annotation.WebInitParam;
 import javax.servlet.annotation.WebServlet;
 
 
-@WebServlet(urlPatterns = {"/openapi/*"},
+@WebServlet(urlPatterns = {"/openapi-annotation/*"},
         initParams = {
                 @WebInitParam(name = "swagger.resource.package", value = ReflectedService.CONTROLLER_PACKAGE),
                 @WebInitParam(name = "swagger.api.basepath", value = "http://localhost:8080/open-api-by-reflection"),
                 @WebInitParam(name = "api.version", value = "1.0.0")
         }
 )
-public class OpenAPIServlet extends ApiDeclarationServlet {
+public class OpenAPIAnnotationServlet extends ApiDeclarationServlet {
     @Override
     public void init(ServletConfig servletConfig) throws ServletException {
         WebXMLReader webXMLReader = new WebXMLReader(servletConfig);

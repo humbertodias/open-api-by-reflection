@@ -8,7 +8,11 @@ Open API servlet generated dynamically by reflection.
 
 Then
 
-    http://localhost:8080/open-api-by-reflection/openapi/swagger.json
+    http://localhost:8080/open-api-by-reflection/openapi-reflection
+    
+or
+    
+    http://localhost:8080/open-api-by-reflection/openapi-annotation/swagger.json
     
 
 # Swagger-UI
