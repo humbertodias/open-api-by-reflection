@@ -3,9 +3,11 @@ package open.api.by.reflection.servlet;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.core.util.Yaml;
+import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
+import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.tags.Tag;
 import open.api.by.reflection.ReflectedService;
 import open.api.by.reflection.controller.Controller;
@@ -19,9 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import io.swagger.v3.oas.models.parameters.Parameter;
 
@@ -29,25 +29,28 @@ import io.swagger.v3.oas.models.parameters.Parameter;
 @WebServlet(urlPatterns = {"/openapi-reflection/*"})
 public class OpenAPIReflectionServlet extends HttpServlet {
 
-    OpenAPI openapi() {
-        Reflections reflections = new Reflections(ReflectedService.CONTROLLER_PACKAGE);
+    Reflections reflections = new Reflections(ReflectedService.CONTROLLER_PACKAGE);
 
-        OpenAPI openAPI = new OpenAPI().openapi("3.0.0");
+    OpenAPI openapi(Set<Class<? extends Controller>> controllers) {
+        OpenAPI openAPI = new OpenAPI();
+        openAPI.servers(Arrays.asList( new Server().url("http://localhost:8080/open-api-by-reflection")));
 
-        Set<Class<? extends Controller>> controllers = reflections.getSubTypesOf(Controller.class);
-        for (Class<? extends Controller> clazz : controllers) {
+        for (Class<?> clazz : controllers) {
 
             Tag tagClass = new Tag().name(clazz.getName());
-            openAPI.addTagsItem( tagClass );
+            openAPI.addTagsItem(tagClass);
 
             for (Method method : clazz.getDeclaredMethods()) {
 
                 List<Parameter> parameters = new ArrayList<>();
-                for (java.lang.reflect.Parameter parameter : method.getParameters()) {
-                    parameters.add(new Parameter().name(parameter.getName()).required(true));
-                }
+                Arrays.asList(method.getParameters()).forEach(parameter -> {
+                    parameters.add(new Parameter().name(parameter.getName()).schema( new Schema().type(type(parameter))));
+                });
 
-                openAPI.path("/" + method.getName(), new PathItem().description("DESC").get(new Operation().summary("List all pets").parameters(parameters)));
+                String name = clazz.isAnnotationPresent(WebServlet.class) ? clazz.getAnnotation(WebServlet.class).urlPatterns()[0] : clazz.getSimpleName();
+                if (!name.startsWith("/")) name = '/' + name;
+
+                openAPI.path(String.format("%s/%s", name, method.getName()), new PathItem().get(new Operation().parameters(parameters).addTagsItem(tagClass.getName())));
 
             }
         }
@@ -56,12 +59,30 @@ public class OpenAPIReflectionServlet extends HttpServlet {
 
     }
 
+    private String type(java.lang.reflect.Parameter parameter) {
+        Class<?> type = parameter.getType();
+        String typeName = type.getSimpleName().toLowerCase();
+        List<String> numbers = Arrays.asList("int", "long", "float", "double");
+        if (numbers.contains(typeName))
+            return "number";
+        else if (type.isArray())
+            return "array";
+        else if(typeName.equalsIgnoreCase("string"))
+            return "string";
+        else
+            return type.getSimpleName();
+    }
+
+    Set<Class<? extends Controller>> controllers() {
+        return reflections.getSubTypesOf(Controller.class);
+    }
+
     String json() throws JsonProcessingException {
-        return Json.pretty().writeValueAsString(openapi());
+        return Json.pretty().writeValueAsString(openapi(controllers()));
     }
 
     String yaml() throws JsonProcessingException {
-        return Yaml.pretty().writeValueAsString(openapi());
+        return Yaml.pretty().writeValueAsString(openapi(controllers()));
     }
 
     @Override
