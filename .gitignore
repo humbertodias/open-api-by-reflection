@@ -8,3 +8,9 @@ build
 gradle*
 
 .idea
+
+
+.classpath
+.settings
+.project
+bin
