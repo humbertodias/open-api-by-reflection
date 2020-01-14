@@ -1,49 +1,42 @@
 package com.openapi.reflection;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.openapi.controller.Controller;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.core.util.Yaml;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
-import io.swagger.v3.oas.models.media.Content;
-import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.tags.Tag;
-import org.reflections.Reflections;
 
 import javax.servlet.annotation.WebServlet;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class APIBuilder {
 
-    private Reflections reflections;
     private OpenAPI openAPI;
 
-    public APIBuilder(String fullPackage, String serverURL) {
-        this.reflections = new Reflections(fullPackage);
-        this.openAPI = openapi(controllers()).servers(Arrays.asList(new Server().url(serverURL)));
+    public APIBuilder(Set<Class<?>> classes, String serverURL) {
+        this.openAPI = openapi(classes).servers(Arrays.asList(new Server().url(serverURL)));
     }
 
-    public OpenAPI openapi() {
-        return this.openAPI;
+    Set<Class<?>> classesByName(Set<Class<?>> classes){
+        return classes.stream().sorted(Comparator.comparing(Class::getSimpleName)).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    private OpenAPI openapi(Set<Class<? extends Controller>> controllers) {
+    public OpenAPI openapi(Set<Class<?>> classes) {
         OpenAPI openAPI = new OpenAPI();
 
-        for (Class<? extends Controller> clazz : controllers) {
+        for (Class<?> clazz : classesByName(classes)) {
 
             Tag tagClass = new Tag().name(clazz.getSimpleName()).description(clazz.getName());
             openAPI.addTagsItem(tagClass);
@@ -56,13 +49,12 @@ public class APIBuilder {
 
     }
 
-    private void methods(OpenAPI openAPI, Class<? extends Controller> clazz, Tag tagClass) {
-        for (Method method : clazz.getDeclaredMethods()) {
-            method(openAPI, clazz, tagClass, method);
-        }
+    private void methods(OpenAPI openAPI, Class<?> clazz, Tag tagClass) {
+        Stream<Method> sortedMethods = Arrays.asList(clazz.getDeclaredMethods()).stream().sorted(Comparator.comparing(Method::getName));
+        sortedMethods.forEach(method -> method(openAPI, clazz, tagClass, method));
     }
 
-    private void method(OpenAPI openAPI, Class<? extends Controller> clazz, Tag tagClass, Method method) {
+    private void method(OpenAPI openAPI, Class<?> clazz, Tag tagClass, Method method) {
         openAPI.path(path(clazz, method), pathItem(method, tagClass));
     }
 
@@ -70,15 +62,24 @@ public class APIBuilder {
         return new Parameter().name(parameter.getName()).schema(new Schema().type(type(parameter)));
     }
 
-    private String path(Class<? extends Controller> clazz, Method method) {
+    private String path(Class<?> clazz, Method method) {
         String name = clazz.isAnnotationPresent(WebServlet.class) ? clazz.getAnnotation(WebServlet.class).urlPatterns()[0] : clazz.getSimpleName();
         if (!name.startsWith("/")) name = '/' + name;
         return String.format("%s/%s", name, method.getName());
     }
 
-
     private PathItem pathItem(Method method, Tag tagClass) {
-        return new PathItem().get(operation(method, tagClass));
+        PathItem pathItem = new PathItem();
+
+        String name = method.getName().toLowerCase();
+        if(name.contains("edit") || name.contains("update") || name.contains("modify"))
+            return pathItem.put(operation(method, tagClass));
+        if(name.contains("save") || name.contains("add") || name.contains("new"))
+            return pathItem.post(operation(method, tagClass));
+        if(name.contains("remove") || name.contains("delete"))
+            return pathItem.delete(operation(method, tagClass));
+
+        return pathItem.get(operation(method, tagClass));
     }
 
     private Operation operation(Method method, Tag tagClass) {
@@ -98,7 +99,6 @@ public class APIBuilder {
         return operation;
     }
 
-
     private String type(java.lang.reflect.Parameter parameter) {
         Class<?> type = parameter.getType();
         String typeName = type.getSimpleName().toLowerCase();
@@ -111,10 +111,6 @@ public class APIBuilder {
             return "string";
         else
             return type.getSimpleName();
-    }
-
-    private Set<Class<? extends Controller>> controllers() {
-        return reflections.getSubTypesOf(Controller.class);
     }
 
     public String json() throws JsonProcessingException {

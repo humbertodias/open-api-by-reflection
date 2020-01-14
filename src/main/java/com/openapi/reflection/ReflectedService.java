@@ -1,6 +1,5 @@
 package com.openapi.reflection;
 
-import com.openapi.controller.Controller;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 
@@ -18,19 +17,18 @@ public final class ReflectedService {
         reflections = new Reflections(packagePath, new SubTypesScanner(false));
     }
 
-    public Set<Class<? extends Controller>> getClasses() {
-        return reflections.getSubTypesOf(Controller.class);
+    public Set<Class<?>> getClasses() throws ClassNotFoundException {
+        return getClasses("com.openapi.controller.Controller");
     }
 
-    public Set<Class<?>> getClassesBySimpleName(String name) {
+    public Set<Class<?>> getClasses(String className) throws ClassNotFoundException {
+        Class<Object> type = (Class<Object>) Class.forName(className);
+        return reflections.getSubTypesOf(type);
+    }
+
+    public Set<Class<?>> getClassesBySimpleName(String name) throws ClassNotFoundException {
         return getClasses().stream()
                 .filter(clazz -> clazz.getSimpleName().equals(name))
-                .collect(Collectors.toSet());
-    }
-
-    public Set<Class<?>> getClassesByName(String name) {
-        return getClasses().stream()
-                .filter(clazz -> clazz.getName().equals(name))
                 .collect(Collectors.toSet());
     }
 

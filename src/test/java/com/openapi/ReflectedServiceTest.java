@@ -14,22 +14,26 @@ public class ReflectedServiceTest {
 
     ReflectedService reflectedService = new ReflectedService("com.openapi.controller");
 
+    Set<Class<?>> classes() throws ClassNotFoundException {
+        return reflectedService.getClasses("com.openapi.controller.Controller");
+    }
+
     @Test
-    public void anyClassTest() {
-        Set<Class<? extends Controller>> classes = reflectedService.getClasses();
+    public void anyClassTest() throws ClassNotFoundException {
+        Set<Class<?>> classes = classes();
         assertTrue(classes.size() > 0);
     }
 
     @Test
-    public void anyMethodTest() {
-        Set<Class<? extends Controller>> classes = reflectedService.getClasses();
+    public void anyMethodTest() throws ClassNotFoundException {
+        Set<Class<?>> classes = classes();
         Class<?> firstClass = classes.stream().findFirst().get();
         Set<Method> methods = reflectedService.getMethods(firstClass);
         assertTrue(methods.size() > 0);
     }
 
     @Test
-    public void anyMethodParametersTest() {
+    public void anyMethodParametersTest() throws ClassNotFoundException {
         Set<Class<?>> classes = reflectedService.getClassesBySimpleName("HelloController");
         Class<?> firstClass = classes.stream().findFirst().get();
         Set<Method> methods = reflectedService.getMethodsByName(firstClass, "m3");

@@ -24,6 +24,10 @@ Build
 Run
 
     java -jar build/libs/open-api-by-reflection-all.jar -p com.openapi.controller -o /tmp/openapi.json
+
+Using external jar    
+    
+    java -cp yourlib.jar:build/libs/open-api-by-reflection-all.jar com.openapi.Main  -p com.pkg.searchable -t  com.pkg.SubTypeClass -o /tmp/openapi.json
     
 # Swagger-UI
 
