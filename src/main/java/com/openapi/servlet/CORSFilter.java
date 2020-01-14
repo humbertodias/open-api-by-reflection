@@ -1,4 +1,4 @@
-package open.api.by.reflection.servlet;
+package com.openapi.servlet;
 
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
@@ -19,6 +19,6 @@ public class CORSFilter implements Filter {
 
     public void destroy() {}
 
-    public void init(FilterConfig filterConfig) throws ServletException {}
+    public void init(FilterConfig filterConfig) {}
 
 }

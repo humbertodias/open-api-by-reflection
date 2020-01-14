@@ -1,6 +1,7 @@
-package open.api.by.reflection;
+package com.openapi;
 
-import open.api.by.reflection.controller.Controller;
+import com.openapi.controller.Controller;
+import com.openapi.reflection.ReflectedService;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
@@ -11,7 +12,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ReflectedServiceTest {
 
-    ReflectedService reflectedService = new ReflectedService();
+    ReflectedService reflectedService = new ReflectedService("com.openapi.controller");
 
     @Test
     public void anyClassTest() {

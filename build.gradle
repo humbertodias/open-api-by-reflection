@@ -1,6 +1,7 @@
 plugins {
     id 'war'
     id 'org.gretty' version '3.0.1'
+    id 'java'
 }
 
 repositories {
@@ -20,11 +21,25 @@ dependencies {
     compile group: 'org.reflections', name: 'reflections', version: '0.9.11'
 
     // Annotation
-    implementation 'io.swagger:swagger-servlet:1.6.0'
+    compile 'io.swagger:swagger-servlet:1.6.0'
 
     // Programatically
-    implementation 'org.springdoc:springdoc-openapi-core:1.1.49'
+    compile 'org.springdoc:springdoc-openapi-core:1.1.49'
+
+    // CLI
+    compile 'com.beust:jcommander:1.78'
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
 }
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Jar File Example',
+                   'Main-Class': 'com.openapi.Main'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+

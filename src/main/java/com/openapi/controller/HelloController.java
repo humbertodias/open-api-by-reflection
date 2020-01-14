@@ -1,4 +1,4 @@
-package open.api.by.reflection.controller;
+package com.openapi.controller;
 
 import io.swagger.annotations.*;
 

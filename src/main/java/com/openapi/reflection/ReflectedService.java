@@ -1,6 +1,6 @@
-package open.api.by.reflection;
+package com.openapi.reflection;
 
-import open.api.by.reflection.controller.Controller;
+import com.openapi.controller.Controller;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 
@@ -12,11 +12,10 @@ import java.util.stream.Collectors;
 
 public final class ReflectedService {
 
-    public final static String CONTROLLER_PACKAGE = "open.api.by.reflection.controller";
     final Reflections reflections;
 
-    public ReflectedService(){
-        reflections = new Reflections(CONTROLLER_PACKAGE, new SubTypesScanner(false));
+    public ReflectedService(String packagePath){
+        reflections = new Reflections(packagePath, new SubTypesScanner(false));
     }
 
     public Set<Class<? extends Controller>> getClasses() {
